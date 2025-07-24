@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Word → JSON Tool</title>
+<style>
+textarea {
+    width: 90%;
+    margin-bottom: 10px;
+}
+button {
+    margin: 5px;
+}
+</style>
+</head>
+<body>
+<h2>Upload Word File & Convert to JSON</h2>
+
+<input type="file" id="file">
+<input type="text" id="subject" placeholder="Subject">
+<button onclick="upload()">Convert</button>
+
+<h3>JSON Output:</h3>
+<textarea id="jsonOutput" rows="20" cols="100"></textarea><br>
+
+<button onclick="copyJSON()">📋 Copy JSON</button>
+<button onclick="downloadJSON()">⬇️ Download JSON</button>
+
+<script>
+function upload() {
+    const fileInput = document.getElementById("file");
+    const subject = document.getElementById("subject").value.trim();
+    const file = fileInput.files[0];
+    if (!file) {
+        alert("Please select a Word file.");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("subject", subject || "unknown");
+
+    fetch("/upload", { method: "POST", body: formData })
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("jsonOutput").value =
+                JSON.stringify(data, null, 4);
+        })
+        .catch(err => {
+            alert("Error: " + err);
+        });
+}
+
+function copyJSON() {
+    const jsonText = document.getElementById("jsonOutput");
+    jsonText.select();
+    jsonText.setSelectionRange(0, 99999);
+    document.execCommand("copy");
+    alert("✅ JSON copied to clipboard!");
+}
+
+function downloadJSON() {
+    const data = document.getElementById("jsonOutput").value;
+    if (!data.trim()) {
+        alert("❌ Nothing to download.");
+        return;
+    }
+    const blob = new Blob([data], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "output.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
